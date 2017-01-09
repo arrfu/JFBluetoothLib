@@ -1,0 +1,191 @@
+2016年11月23日更新内容:
+
+    1.新增恢复出厂设置命令(通用命令) 详见LXBluetoothDeviceManager
+
+    2.新增iBcoon设置查询接口(通用命令) 详见LXBluetoothDeviceManager
+
+    3.新增查询设置小猪班克传感器开关接口（PiggyBank设备） 详见LXDevicePiggyBankManager
+
+    4.去掉设备重命名时候自动添加的”（灯光控制）“字样
+
+    5.新增车载设备查询是否支持空频点命令(车载设备) 详见LXBluetoothDeviceFMSenderManager
+
+    6.新增车载设备查询附近空频点命令(车载设备) 详见LXBluetoothDeviceFMSenderManager
+
+    7.新增LEDPanel设备的开关状态查询命令(LedPanel设备) 详见LXBluetoothDeviceLEDPanelManager
+
+    8.新增LEDPanel设备单点绘制和全屏绘制的接口(LedPanel设备) 详见LXBluetoothDeviceLEDPanelManager
+
+    9.新增设置和查询设备最大音量值得接口(通用命令) 详见LXBluetoothDeviceManager
+
+    10.新增设置FM频道的接口(增加和删除)(通用命令) 详见LXBluetoothDeviceManager
+
+    11.关闭校验延迟优化 解决了校验命令和查询脱机闹钟冲突导致的校验失败问题
+
+    12.修改了部分回调解析的条件
+
+
+
+2016年10月10日更新内容:
+    本次更新主要解决一些隐性Bug和兼容一些旧的设备 未添加新的接口
+
+    1. 修正了查询设备id反馈后的解析条件
+
+    2. 修正了[[LXBluetoothDeviceManager sharedInstance]  initBluetoothDeviceManager];初始化BluzManager
+
+    3. 修正了旧的脱机闹钟查询命令和查询版本号命令相同引起的问题
+
+    4. 兼容了旧的查询是否支持设备重命名和ble回连(自动发送)
+
+    *** 注意: 当前关于是否支持 设备重命名、ble回连和脱机闹钟已新旧设备兼容且自动处理, 无需手动发送查询方法
+         直接调用以下属性获取即可:
+            // 新的接口 是否支持设备重命名
+            @property (nonatomic, assign) BOOL   supportDeviceRenameNew;
+
+            // 新的接口 是否支持ble自动回连
+            @property (nonatomic, assign) BOOL   supportAutobleReconnectNew;
+
+            // 新的接口 是否支持脱机闹钟
+            @property (nonatomic, assign) BOOL   supportOfflineAlarmNew;
+
+
+2016年9月27日更新内容:
+*** 注意: 添加设备校验后注意设置好对应的设备类型, 详见9月5日更新内容, 否则会弹框
+
+1. 查询否支持EQ:
+    查询方法: - (void)getDeviceSupportEQstatus;
+    回调: @property (nonatomic, assign) LXEQSupportType   supportEQtype;
+    支持类型: typedef enum {
+                LXEQSupportTypeNone       = 0,  // 不支持
+                LXEQSupportTypeStandard    = 1, // 支持标准EQ
+                LXEQSupportTypeCustom   = 2     // 支持自定义EQ
+            }LXEQSupportType;
+
+
+2. 查询设备主控版本号:
+    查询方法: - (void)getDeviceMasterControlType;
+    回调: @property (nonatomic, copy) NSString *masterControlType;
+
+
+3. 新增存钱罐Manager:LXBluetoothDevicePiggyBankManager(hLXBluetoothDevicePiggyBankManager.h)
+     *** 注意: 存钱罐设备类型为PIGGY_BANK, 但当前固件为SOUND_BOX
+
+    新增方法:
+        (1)查询存取款状态: - (void)getBluetoothDevicePiggyBankMoney;
+           设置存取款方法: - (void)setBluetoothDevicePiggyBankMoneyWithType:(PiggyBankMoneyType)setMoneyType realMoney:(float)real totlalMoney:(float)total;
+
+        (2)查询灯光状态: - (void)getBluetoothDevicePiggyBankLightState;
+           设置灯光状态方法: - (void)setBluetoothDevicePiggyBankLightState:(PiggyBankLightState)lightState;
+
+        (3)查询控制验证码: - (void)getBluetoothDevicePiggyBankVerificationCode;
+           设置控制验证码方法: - (void)setBluetoothDevicePiggyBankVerificationCode:(Byte[])verificationCode;
+
+    代理方法:
+        名称: LXBluetoothDevicePiggyBankDelegate
+        获取manager和设置代理: LXBluetoothDevicePiggyBankManager *piggerBankManager; = [[LXBluetoothDeviceManager sharedInstance] getLXBluetoothDevicePiggyBankManagerWithDelegate:self];
+        代理方法:
+            - (void)bluetoothDevicePiggerBankMoneyDidChangedWithRealMoney:(float)real totalMoney:(float)total; // 查询和设置 存取款 的回调
+            - (void)bluetoothDevicePiggerBankLightStateFadeback:(PiggyBankLightState)lightState; // 查询和设置 灯光状态 的回调
+            - (void)bluetoothDevicePiggerBankVerificationCode:(Byte[])verificationCode;  // 查询和设置 是设备控制权验证码 的回调
+
+
+
+
+
+2016年9月5日更新:
+
+1. 查询设备id 版本号和是否支持OTA, 连接成功后自动查询, 直接使用LXBluetoothDeviceManager属性即可:
+
+        // 是否支持OTA升级
+        @property (nonatomic, assign) BOOL   supportOTA;
+
+        // 当前的固件版本
+        @property (nonatomic, copy) NSString *firmwareVersion;
+
+        // 设备id
+        @property (nonatomic, copy) NSString *deviceID;
+
+    *** 注意: 为适配新旧设备, 各发了新旧版本查询命令, 但旧设备只有固件版本
+
+
+2. 设备校验: 连接成功后, 如果查询版本号正确返回(未正确返回视为校验失败), 自动进行校验, 失败则弹提示框
+
+    *** 注意: 由于不同设备设备id不同, 所以必须要通过以下接口设置设备类型, 否则会导致校验失败
+
+        // 设置当前设备的类型
+        - (void)setDeviceType:(LXDeviceType )deviceType;
+
+    例如音响设备:[[LXBluetoothDeviceManager sharedInstance] setDeviceType:SOUND_BOX];
+
+
+3. 查询设备支持的功能(新): 旧的方法保留不变, 新的方法连接成功后自动查询, 直接使用LXBluetoothDeviceManager获取即可:
+
+        // 新的接口 是否支持设备重命名
+        @property (nonatomic, assign) BOOL   supportDeviceRenameNew;
+
+        // 新的接口 是否支持ble自动回连
+        @property (nonatomic, assign) BOOL   supportAutobleReconnectNew;
+
+        // 新的接口 是否支持脱机闹钟
+        @property (nonatomic, assign) BOOL   supportOfflineAlarmNew;
+
+    *** 注意: 旧方法保留, 注意新旧设备加以区别
+
+
+4. 查询设备支持的功能变化(聚力层):
+    使用 -(BOOL)isFeatureSupport:(UInt32)offset; 查询设备支持功能时使用的枚举值由FuncMode 变更为FeatureSupport
+        typedef enum {
+            FeatureA2dp         = 0,
+            FeatureCard         = 1,
+            FeatureUhost        = 2,
+            FeatureRecPlayback  = 3,
+            FeatureFolder       = 4,
+            FeatureRadio        = 5,
+            FeatureLinein       = 6,
+            FeatureRecMic       = 7,
+            FeatureRecFm        = 8,
+            FeatureRecAux       = 9,
+            FeatureAlarm        = 10,
+            FeatureRingBuildin  = 11,
+            FeatureRingFolder   = 12,
+            FeatureRingPlaylist = 13,
+            FeatureRingFm       = 14,
+            FeatureLight        = 30,
+            FeatureUSBSpeaker   = 16,
+            FeatureOTA          = 17
+        }FeatureSupport;
+
+    例如查询是否支持TF卡:[[LXBluetoothDeviceManager sharedInstance] isFeatureSupport:FeatureCard];
+
+
+5. 睡眠模式:
+    FuncMode新增枚举值MODE_SLEEP, 值为98
+        typedef enum {
+            MODE_UNKNOWN    = -1,
+            MODE_A2DP       = 0,
+            MODE_CARD       = 1,
+            MODE_UHOST      = 2,
+            MODE_LINEIN     = 3,
+            MODE_RADIO      = 4,
+            MODE_USBSPEAKER = 5,
+            MODE_ALARM      = 8,
+            MODE_URECORD    = 9,
+            MODE_CRECORD    = 10,
+            MODE_CAUDRECORD = 13,
+            MODE_UAUDRECORD = 21,
+            MODE_CHARGE     = 16,
+            MODE_SLEEP      = 98
+        }FuncMode;
+
+    设置睡眠模式:[[LXBluetoothDeviceManager sharedInstance] setMode:MODE_SLEEP];
+    睡眠模式回调:-(void)bluetoothDeviceModeDidChangeState:(UInt32)mode;模式改变回调, mode = MODE_SLEEP为睡眠模式
+
+
+6. OTA升级:新增OTA升级类LXOTAPresenter
+    相关代理: OTAUpdateDelegate,OTAControllerDelegate
+    设置代理方法: [mPresenter setManager:[LXBluetoothDeviceManager sharedInstance].globalManager];
+                [mPresenter setDelegate:self];
+    升级方法: [mPresenter setUpgradeFile:path part:16];
+             [mPresenter startUpgrade];
+             其中path为OTA文件的路径
+    相关代理回调: 具体见LXOTAPresenter.h中OTAUpdateDelegate,OTAControllerDelegate的代理方法
